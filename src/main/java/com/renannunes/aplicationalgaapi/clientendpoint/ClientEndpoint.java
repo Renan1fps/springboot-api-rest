@@ -1,70 +1,67 @@
 package com.renannunes.aplicationalgaapi.clientendpoint;
 
-import com.renannunes.aplicationalgaapi.domain.model.Client;
+import com.renannunes.aplicationalgaapi.domain.model.Cliente;
 import com.renannunes.aplicationalgaapi.domain.service.CadastroClienteService;
-import com.renannunes.aplicationalgaapi.repository.ClientRepository;
+import com.renannunes.aplicationalgaapi.repository.ClienteRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.util.List;
 import java.util.Optional;
 
-@RequestMapping(path = "/v1")
 @RestController
+@RequestMapping("/clientes")
 public class ClientEndpoint {
+    @Autowired
+    private ClienteRepository clienteRepository;
+
     @Autowired
     private CadastroClienteService cadastroCliente;
 
-    @Autowired
-    private ClientRepository clientRepository;
-
-
-    @GetMapping(path = "/clients")
-    public ResponseEntity<?> getClients() {
-        return new ResponseEntity<>(clientRepository.findAll(), HttpStatus.OK);
+    @GetMapping
+    public List<Cliente> listar() {
+        return clienteRepository.findAll();
     }
 
-    @GetMapping(path = "/findByName")
-    public ResponseEntity<?> findByName() {
-        return new ResponseEntity<>(clientRepository.findByName("renan"), HttpStatus.OK);
+    @GetMapping("/{clienteId}")
+    public ResponseEntity<Cliente> buscar(@PathVariable Long clienteId) {
+        Optional<Cliente> cliente = clienteRepository.findById(clienteId);
+
+        return cliente.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+
     }
 
-    @GetMapping(path = "/findId/{id}")
-    public ResponseEntity<?> findById(@PathVariable Long id) {
-        Optional<Client> client = clientRepository.findById(id);
-        if (client.isPresent()) {
-            return ResponseEntity.ok(client.get());
-        }
-        return ResponseEntity.notFound().build();
-    }
-
-    @PostMapping(path = "/clients")
+    @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public Client save(@Valid @RequestBody Client client) {
-        return cadastroCliente.salvar(client);
+    public Cliente adicionar(@Valid @RequestBody Cliente cliente) {
+        return cadastroCliente.salvar(cliente);
     }
 
-    @PutMapping(path = "/clients/{id}")
-    public ResponseEntity<Client> update(@Valid @PathVariable Long id, @RequestBody Client client) {
-        if (!clientRepository.existsById(id)) {
+    @PutMapping("/{clienteId}")
+    public ResponseEntity<Cliente> atualizar(@Valid @PathVariable Long clienteId,
+                                             @RequestBody Cliente cliente) {
+
+        if (!clienteRepository.existsById(clienteId)) {
             return ResponseEntity.notFound().build();
         }
-        client.setId(id);
-        cadastroCliente.salvar(client);
-        return ResponseEntity.ok(client);
 
+        cliente.setId(clienteId);
+        cliente = cadastroCliente.salvar(cliente);
+
+        return ResponseEntity.ok(cliente);
     }
 
-    @DeleteMapping(path = "/clients/{id}")
-    public ResponseEntity<?> delete(@PathVariable Long id) {
-        if (!clientRepository.existsById(id)) {
+    @DeleteMapping("/{clienteId}")
+    public ResponseEntity<Void> remover(@PathVariable Long clienteId) {
+        if (!clienteRepository.existsById(clienteId)) {
             return ResponseEntity.notFound().build();
         }
-        clientRepository.deleteById(id);
+
+        cadastroCliente.excluir(clienteId);
+
         return ResponseEntity.noContent().build();
     }
-
-
 }

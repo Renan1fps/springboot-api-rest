@@ -2,82 +2,68 @@ package com.renannunes.aplicationalgaapi.execptionhandle;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import java.time.OffsetDateTime;
 import java.util.List;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)//campos que estiverem nulos ele nao incluirá no retrono do erro.
 public class CustomError {
-    private String title;
-    private int status;
-    private String details;
-    private long timestamp;
-    private String developerMessage;
+
+    private Integer status;
+    private OffsetDateTime dataHora;
+    private String titulo;
     private List<Campo> campos;
 
     public static class Campo {
-        private String name;
-        private String message;
 
-        public Campo(String name, String message) {
-            this.name = name;
-            this.message = message;
+        private String nome;
+        private String mensagem;
+
+        public Campo(String nome, String mensagem) {
+            super();
+            this.nome = nome;
+            this.mensagem = mensagem;
         }
 
-        public String getName() {
-            return name;
+        public String getNome() {
+            return nome;
         }
 
-        public void setName(String name) {
-            this.name = name;
+        public void setNome(String nome) {
+            this.nome = nome;
         }
 
-        public String getMessage() {
-            return message;
+        public String getMensagem() {
+            return mensagem;
         }
 
-        public void setMessage(String message) {
-            this.message = message;
+        public void setMensagem(String mensagem) {
+            this.mensagem = mensagem;
         }
+
     }
 
-
-    public String getTitle() {
-        return title;
-    }
-
-    public void setTitle(String title) {
-        this.title = title;
-    }
-
-    public int getStatus() {
+    public Integer getStatus() {
         return status;
     }
 
-    public void setStatus(int status) {
+    public void setStatus(Integer status) {
         this.status = status;
     }
 
-    public String getDetails() {
-        return details;
+    public OffsetDateTime getDataHora() {
+        return dataHora;
     }
 
-    public void setDetails(String details) {
-        this.details = details;
+    public void setDataHora(OffsetDateTime dataHora) {
+        this.dataHora = dataHora;
     }
 
-    public long getTimestamp() {
-        return timestamp;
+    public String getTitulo() {
+        return titulo;
     }
 
-    public void setTimestamp(long timestamp) {
-        this.timestamp = timestamp;
-    }
-
-    public String getDeveloperMessage() {
-        return developerMessage;
-    }
-
-    public void setDeveloperMessage(String developerMessage) {
-        this.developerMessage = developerMessage;
+    public void setTitulo(String titulo) {
+        this.titulo = titulo;
     }
 
     public List<Campo> getCampos() {

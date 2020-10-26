@@ -1,9 +1,13 @@
 package com.renannunes.aplicationalgaapi.execptionhandle;
 
-import com.renannunes.aplicationalgaapi.domain.exceptions.SalvaException;
+import com.renannunes.aplicationalgaapi.domain.exceptions.NegocioException;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.FieldError;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -11,42 +15,47 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
-import java.util.Date;
 
 @ControllerAdvice
 public class ExceptionHandlerAPI extends ResponseEntityExceptionHandler {
+    @Autowired
+    private MessageSource messageSource;
 
-    @ExceptionHandler(SalvaException.class)
-    public ResponseEntity<?> handleSave(SalvaException save, WebRequest webRequest) {
-        var erro = new CustomError();
-        erro.setTitle(save.getMessage());
-        erro.setTimestamp(new Date().getTime());
-        erro.setStatus(HttpStatus.BAD_REQUEST.value());
-        erro.setDeveloperMessage(save.getClass().getName());
-        erro.setDetails(save.getMessage());
-        return handleExceptionInternal(save, erro, new HttpHeaders(), HttpStatus.BAD_REQUEST, webRequest);
 
+    @ExceptionHandler(NegocioException.class)
+    public ResponseEntity<Object> handleNegocio(NegocioException ex, WebRequest request) {
+        var status = HttpStatus.BAD_REQUEST;
+
+        var problema = new CustomError();
+        problema.setStatus(status.value());
+        problema.setTitulo(ex.getMessage());
+        problema.setDataHora(OffsetDateTime.now());
+
+        return handleExceptionInternal(ex, problema, new HttpHeaders(), status, request);
     }
-
 
     @Override
-    protected ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException ex, HttpHeaders headers, HttpStatus status, WebRequest request) {
-        var erro = new CustomError();
-        var erroCampos = new ArrayList<CustomError.Campo>();
+    protected ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException ex,
+                                                                  HttpHeaders headers, HttpStatus status, WebRequest request) {
+        var campos = new ArrayList<CustomError.Campo>();
 
-        for (ObjectError erros : ex.getBindingResult().getAllErrors()) {
-            String name = erros.getObjectName();
-            String message = erros.getDefaultMessage();
-            erroCampos.add(new CustomError.Campo(name, message));
+        for (ObjectError error : ex.getBindingResult().getAllErrors()) {
+            String nome = ((FieldError) error).getField();
+            String mensagem = messageSource.getMessage(error, LocaleContextHolder.getLocale());
+
+            campos.add(new CustomError.Campo(nome, mensagem));
         }
-        erro.setStatus(status.value());
-        erro.setTimestamp(new Date().getTime());
-        erro.setTitle("Field validation error");
-        erro.setDeveloperMessage(ex.getClass().getName());
-        erro.setCampos(erroCampos);
-        return super.handleExceptionInternal(ex, erro, headers, status, request);
-    }
 
+        var problema = new CustomError();
+        problema.setStatus(status.value());
+        problema.setTitulo("Um ou mais campos estão inválidos. "
+                + "Faça o preenchimento correto e tente novamente");
+        problema.setDataHora(OffsetDateTime.now());
+        problema.setCampos(campos);
+
+        return super.handleExceptionInternal(ex, problema, headers, status, request);
+    }
 
 }
